@@ -1,14 +1,16 @@
 const bcrypt = require("bcrypt");//bcrypt package de cryptage
 const User = require("../models/User");//importation du model User c est le fichier User.js qui contient le modèle a utilisé
 const jwt = require('jsonwebtoken');//jsonwebtoken
-const sanitize = require("sanitize");//nettoyeur permet de sécurisé les requètes
+const sanitize = require("mongo-sanitize");//nettoyeur permet de sécurisé les requètes
 
 /**fonction pour l'enregistrement des nouveaux utilisateurs */
-exports.signup = (req, res, next) => {//1er chose à faire hachage du mot de pass fonction asynchrone
-    bcrypt.hash(sanitize(req.body.password, 10))//salt=10 c'est le nombre de tour d 'algorytm pour securisez le hash
-        .then(hash => {
-            const user = new User({
-                email: req.body.email,
+exports.signup = (req, res, next) => {
+    let password = sanitize(req.body.password);
+    let buff = new Buffer.from(req.body.email);//Buffer est utilisé pour la masquage de l'email
+    bcrypt.hash(password, 10)//salt=10 c'est le nombre de tour d 'algorytm pour securisez le hash
+        .then(hash => {      //1er chose à faire hachage du mot de pass fonction asynchrone
+            const user = new User({ //aller voir le modèle
+                email: buff.toString("base64"),
                 password: hash //permet de sauvegarder le hash du password et nom le password en clair
             });
             user.save()
@@ -19,16 +21,18 @@ exports.signup = (req, res, next) => {//1er chose à faire hachage du mot de pas
 };
 /**fonction pour la connexion des utilisateurs existants */
 exports.login = (req, res, next) => {
+    let password = sanitize(req.body.password);
+    let buff = new Buffer.from(req.body.email);
     //trouvé le user dans la base de données avec le mail
     User.findOne({//objet de comparaison c est le email on compare le mail envoyé par le front avec les mails de la bdd
-        email: req.body.email
+        email: buff.toString("base64"),
     })
         .then(user => { //verification si on a récuperer un user ou pas
             if (!user) { //si on a pas trouver de user on retourne
                 return res.status(401).json({ error });
             }
             //on a trouver un user et on va utilisé bcrypt
-            bcrypt.compare(req.body.password, user.password)//hash enregistrer plus haut
+            bcrypt.compare(password, user.password)//hash enregistrer plus haut
                 //dans le .then on recoit un boolean 
                 .then(valid => { //retour false
                     if (!valid) {
@@ -46,7 +50,7 @@ exports.login = (req, res, next) => {
                         )
                     });
                 })
-                .catch(error => res.status(500).json({ error }));
+                .catch(error => res.status(500).json({error}));
         })
-        .catch(error => res.status(500).json({ error }));
+        .catch(error => res.status(500).json({error}));
 };

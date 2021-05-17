@@ -1,9 +1,10 @@
 const Sauce = require('../models/Sauce');
 const fs = require('fs');
-const sanitize = require("sanitize");
+const sanitize = require("mongo-sanitize");
 
 exports.createSauce = (req, res, next) => {
-  const sauceObjet = JSON.parse(req.body.sauce);
+  let sauceBody = sanitize(req.body.sauce);
+  const sauceObjet = JSON.parse(sauceBody);
   delete sauceObjet._id;
   const sauce = new Sauce({
     ...sauceObjet,
@@ -16,8 +17,11 @@ exports.createSauce = (req, res, next) => {
 };
 
 exports.modifySauce = (req, res, next) => { //saucefindOne pour remplacer l image et supprimer l ancienne
+  let sauceId = sanitize(req.params.id);
+  let sauceBody = sanitize(req.body.sauce);
+
   if (req.file) {
-    Sauce.findOne({ _id: req.params.id })
+    Sauce.findOne({ _id: sauceId })
       .then(sauce => {
         const filename = sauce.imageUrl.split('/images/')[1];
         fs.unlink(`images/${filename}`, () => { })
@@ -26,20 +30,21 @@ exports.modifySauce = (req, res, next) => { //saucefindOne pour remplacer l imag
   }
   const sauceObject = req.file ?
     {
-      ...JSON.parse(req.body.sauce),
+      ...JSON.parse(sauceBody),
       imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...sanitize(req.body) };
-  Sauce.updateOne({ _id: sanitize(req.params.id) }, { ...sauceObject, _id: sanitize(req.params.id) }) //update permet de modifier en recuperant l objet par son id
+    } : { ...req.body };
+  Sauce.updateOne({ _id: sauceId }, { ...sauceObject, _id: sauceId }) //update permet de modifier en recuperant l objet par son id
     .then(() => res.status(200).json({ message: "sauce modifiée" }))
     .catch(error => res.status(400).json({ message: "non modifié !" }));
 };
 
 exports.deleteSauce = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id })
+  let sauceId = sanitize(req.params.id);
+  Sauce.findOne({ _id: sauceId })
     .then(sauce => {
       const filename = sauce.imageUrl.split('/images/')[1];
       fs.unlink(`images/${filename}`, () => {
-        Sauce.deleteOne({ _id: req.params.id })
+        Sauce.deleteOne({ _id: sauceId })
           .then(() => res.status(200).json({ message: "sauce supprimée" }))
           .catch(error => res.status(400).json({ message: "sauce non supprimée" }));
       });
@@ -48,7 +53,8 @@ exports.deleteSauce = (req, res, next) => {
 };
 
 exports.getOneSauce = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id })
+  let sauceId = sanitize(req.params.id);
+  Sauce.findOne({ _id: sauceId })
     .then(sauce => res.status(200).json(sauce))
     .catch(error => res.status(404).json({ error }));
 };
@@ -61,9 +67,9 @@ exports.getAllSauces = (req, res, next) => {
 };
 
 exports.sauceLike = (req, res, next) => {
-  let like = req.body.like;
-  let user = req.body.userId;
-  let sauceId = req.params.id;
+  let like = sanitize(req.body.like);
+  let user = sanitize(req.body.userId);
+  let sauceId = sanitize(req.params.id);
 
   Sauce.findOne({ _id: sauceId })
     .then((sauce) => {
