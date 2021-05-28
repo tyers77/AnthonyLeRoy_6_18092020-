@@ -1,5 +1,5 @@
 const express = require("express"); //importation de Express
-const helmet = require("helmet");//sécurisation de l'API
+const helmet = require("helmet");//sécurisation de l'API en définissant des en tête http
 const mongoose = require("mongoose");// modélisation des objets
 require('dotenv').config();//utilisation de dotenv pour la variable d environnement d'accès à la BDD 
 const path = require("path");// désigne le chemin join pour servir les fichier images statiques

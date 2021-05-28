@@ -44,7 +44,7 @@ exports.login = (req, res, next) => {
                         //token d'authentification
                         token: jwt.sign(    //création de l'objet a encoder
                             { userId: user._id },
-                            /*clé secret pour l'encodage*/"RANDOM_TOKEN_SECRET",
+                            process.env.CLE_TOKEN,//'RANDOM_TOKEN_SECRET',/*clé secret pour l'encodage*/
                             /**argument de configuration pour l'expiration */
                             { expiresIn: "24h" } //chaque token durera 24heures
                         )

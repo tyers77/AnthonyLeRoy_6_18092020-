@@ -1,5 +1,5 @@
 const Sauce = require('../models/Sauce');
-const fs = require('fs');
+const fs = require('fs'); //gestionnaire de fichier
 const sanitize = require("mongo-sanitize");
 
 exports.createSauce = (req, res, next) => {
@@ -37,6 +37,7 @@ exports.modifySauce = (req, res, next) => { //saucefindOne pour remplacer l imag
     .then(() => res.status(200).json({ message: "sauce modifiée" }))
     .catch(error => res.status(400).json({ message: "non modifié !" }));
 };
+
 
 exports.deleteSauce = (req, res, next) => {
   let sauceId = sanitize(req.params.id);
